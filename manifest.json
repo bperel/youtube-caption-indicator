@@ -1,0 +1,16 @@
+{
+  "manifest_version": 2,
+  "name": "Youtube caption indicator",
+  "version": "0.1",
+  "content_scripts": [
+	{
+	  "matches": [
+		"https://www.youtube.com/*"
+	  ],
+	  "js": ["bower_components/jquery/dist/jquery.min.js", "youtube-caption-indicator.js"]
+	}
+  ],
+  "browser_action": {
+	"default_icon": "assets/icon.png"
+  }
+}

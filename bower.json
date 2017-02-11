@@ -1,0 +1,21 @@
+{
+  "name": "youtube-caption-indicator",
+  "main": "youtube-caption-indicator.js",
+  "homepage": "https://github.com/bperel/youtube-caption-indicator",
+  "authors": [
+    "Bruno Perel <brunoperel@gmail.com>"
+  ],
+  "description": "Add language-specific caption information in YouTube video blocks",
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^3.1.1"
+  }
+}
