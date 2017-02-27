@@ -51,20 +51,28 @@
             });
     }
 
-    $('[data-context-item-id]').each(function () {
+    function getBadgeContainer(videoBlockElement) {
+        var badgesContainer = videoBlockElement.find('div.yt-lockup-badges');
+        return badgesContainer.length ? badgesContainer : null;
+    }
+
+    function hasProcessedBadges(ccDetailsContainer) {
+        return ccDetailsContainer.find('li.yt-badge-item').length > 1;
+    }
+
+    function createIndicatorFromSearchResults() {
         var videoBlockElement = $(this);
         var videoId = videoBlockElement.attr('data-context-item-id');
-        var badgesContainer = videoBlockElement.find('div.yt-lockup-badges');
         var ccDetailsContainer;
-        var hasBadges = !!badgesContainer.length;
-        if (hasBadges) {
+        var badgesContainer = getBadgeContainer(videoBlockElement);
+        if (!!badgesContainer) {
             ccDetailsContainer = badgesContainer.find('ul.yt-badge-list');
             var ccElements = ccDetailsContainer.find('li.yt-badge-item');
             if (ccElements.length === 0) {
                 console.log('No caption for this video, ignoring');
                 return;
             }
-            else if (ccElements.length > 1) {
+            else if (hasProcessedBadges(ccDetailsContainer)) {
                 console.log('Caption list already processed, ignoring');
                 return;
             }
@@ -74,16 +82,29 @@
             ccDetailsContainer = videoBlockElement.find('ul.yt-badge-list');
         }
         addCCInfoToVideoBlockElement(videoId, ccDetailsContainer);
-    });
+    }
 
-    $('.related-list-item-compact-video, .autoplay-bar .video-list-item').each(function () {
+    function createIndicatorFromRelatedVideos() {
         var videoBlockElement = $(this);
         var videoId = videoBlockElement.find('a.content-link').attr('href').replace(/^.+\?v=(.+)$/, '$1');
 
-        addEmptyBadgeSectionAfter(videoBlockElement.find('.stat.view-count'));
+        var badgesContainer = getBadgeContainer(videoBlockElement);
+        if (!!badgesContainer) {
+            console.log('Caption list already processed, ignoring');
+        }
+        else {
+            addEmptyBadgeSectionAfter(videoBlockElement.find('.stat.view-count'));
+            addCCInfoToVideoBlockElement(videoId, videoBlockElement.find('ul.yt-badge-list'));
+        }
+    }
 
-        var ccDetailsContainer = videoBlockElement.find('ul.yt-badge-list');
-        addCCInfoToVideoBlockElement(videoId, ccDetailsContainer);
-    });
+    $('body')
+        .on('DOMNodeInserted', '[data-context-item-id]', createIndicatorFromSearchResults)
+        .on('DOMNodeInserted', '.related-list-item-compact-video, .autoplay-bar .video-list-item', createIndicatorFromRelatedVideos);
+
+    $('[data-context-item-id]').each(createIndicatorFromSearchResults);
+
+    $('.related-list-item-compact-video, .autoplay-bar .video-list-item').each(createIndicatorFromRelatedVideos);
+
 
 })();
