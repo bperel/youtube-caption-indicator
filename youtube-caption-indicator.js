@@ -13,6 +13,8 @@
     'use strict';
 
     var api_key = '';
+    var current_timestamp = Math.floor(Date.now() / 1000);
+    var cache_ttl = 3600;
 
     function addEmptyBadgeSectionAfter(afterWhat) {
         afterWhat.after(
@@ -24,31 +26,58 @@
         );
     }
 
-    function addCCInfoToVideoBlockElement(videoId, blockElement) {
+    function getCCInfo(videoId, callback) {
+        var ccInfo = null;
+        if (typeof GM_getValue === "function") {
+            ccInfo = GM_getValue('youtube-caption-indicator-'+videoId);
+            if (ccInfo) {
+                ccInfo = JSON.parse(ccInfo);
+                if (current_timestamp - ccInfo.timestamp < cache_ttl) {
+                    console.info(videoId + ': Retrieved CC info from cache');
+                    callback(ccInfo.items);
+                    return;
+                }
+                else {
+                    console.info(videoId + ': Cache expired, retrieving CC info again');
+                }
+            }
+        }
         $.getJSON('https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId=' + videoId + '&key=' + api_key)
             .done(function (data) {
-                var ccNewElements = $.map(data.items, function (ccItem) {
-                    if (!ccItem.snippet) {
-                        console.error('Malformed CC item: no snippet key, ignoring');
-                    }
-                    var isAuto = ccItem.snippet.trackKind === 'ASR';
-                    var language = ccItem.snippet.language;
-                    var text = 'CC ' + (isAuto ? 'auto' : language);
+                callback(data.items);
 
-                    return $('<li>')
-                        .addClass('yt-badge-item')
-                        .append(
-                            $('<span>')
-                                .addClass('yt-badge')
-                                .text(text)
-                        );
-                });
-                blockElement.html(ccNewElements);
+                if (typeof GM_setValue === 'function') {
+                    GM_setValue('youtube-caption-indicator-'+videoId, JSON.stringify({timestamp: current_timestamp, items: data.items }));
+                    console.info(videoId + ': Stored in cache for ' + cache_ttl + 'seconds');
+                }
             })
             .fail(function (jqxhr, textStatus, error) {
                 var err = textStatus + ", " + error;
-                console.error("Request Failed: " + err);
+                console.error(videoId + ': Request Failed: ' + err);
             });
+    }
+
+    function addCCInfoToVideoBlockElement(videoId, blockElement) {
+        getCCInfo(videoId, function(ccInfo) {
+            var ccNewElements = $.map(ccInfo, function (ccItem) {
+                if (!ccItem.snippet) {
+                    console.error(videoId + ': Malformed CC item: no snippet key, ignoring');
+                }
+                var isAuto = ccItem.snippet.trackKind === 'ASR';
+                var language = ccItem.snippet.language;
+                var text = 'CC ' + (isAuto ? 'auto' : language);
+
+                return $('<li>')
+                    .addClass('yt-badge-item')
+                    .append(
+                        $('<span>')
+                            .addClass('yt-badge')
+                            .text(text)
+                    );
+            });
+
+            blockElement.html(ccNewElements);
+        });
     }
 
     function getBadgeContainer(videoBlockElement) {
@@ -65,20 +94,22 @@
         var videoId = videoBlockElement.attr('data-context-item-id');
         var ccDetailsContainer;
         var badgesContainer = getBadgeContainer(videoBlockElement);
+        var descriptionContainer = videoBlockElement.find('.yt-lockup-description');
+        var metaContainer = videoBlockElement.find('.yt-lockup-meta');
         if (!!badgesContainer) {
             ccDetailsContainer = badgesContainer.find('ul.yt-badge-list');
             var ccElements = ccDetailsContainer.find('li.yt-badge-item');
             if (ccElements.length === 0) {
-                console.log('No caption for this video, ignoring');
+                console.log(videoId + ': No caption for this video, ignoring');
                 return;
             }
             else if (hasProcessedBadges(ccDetailsContainer)) {
-                console.log('Caption list already processed, ignoring');
+                console.log(videoId + ': Caption list already processed, ignoring');
                 return;
             }
         }
         else {
-            addEmptyBadgeSectionAfter(videoBlockElement.find('.yt-lockup-description'));
+            addEmptyBadgeSectionAfter(descriptionContainer.length ? descriptionContainer : metaContainer);
             ccDetailsContainer = videoBlockElement.find('ul.yt-badge-list');
         }
         addCCInfoToVideoBlockElement(videoId, ccDetailsContainer);
@@ -90,7 +121,7 @@
 
         var badgesContainer = getBadgeContainer(videoBlockElement);
         if (!!badgesContainer) {
-            console.log('Caption list already processed, ignoring');
+            console.log(videoId + ': Caption list already processed, ignoring');
         }
         else {
             addEmptyBadgeSectionAfter(videoBlockElement.find('.stat.view-count'));
