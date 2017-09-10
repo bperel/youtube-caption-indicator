@@ -2,7 +2,7 @@
 // @name         Youtube caption indicator
 // @namespace    youtube-caption-indicator
 // @require      https://code.jquery.com/jquery-3.1.1.min.js
-// @version      0.2
+// @version      0.3
 // @description  Add language-specific caption information in YouTube video blocks
 // @author       Bruno Perel
 // @match        https://www.youtube.com/*
@@ -14,8 +14,39 @@
     'use strict';
 
     var api_key = '';
-    var current_timestamp = Math.floor(Date.now() / 1000);
+    var current_timestamp;
     var cache_ttl = 3600;
+
+    function getCacheValue(key, callback) {
+        if (typeof GM_getValue === "function") {
+            callback(JSON.parse(GM_getValue(key)));
+        }
+        else if (typeof(browser) === 'object') {
+            browser.storage.sync.get(key, function(value) {
+                callback(value[key]);
+            });
+        }
+        else {
+            console.error('No suitable cache provider!');
+        }
+    }
+
+    function setCacheValue(key, value, wasAlreadyInCache, callback) {
+        if (typeof GM_setValue === "function") {
+            GM_setValue(key, JSON.stringify(value));
+            callback(wasAlreadyInCache);
+        }
+        else if (typeof(browser) === 'object') {
+            var object = {};
+            object[key] = value;
+            browser.storage.sync.set(object, function() {
+                callback(wasAlreadyInCache);
+            });
+        }
+        else {
+            console.error('No suitable cache provider!');
+        }
+    }
 
     function addEmptyBadgeSectionAfter(afterWhat) {
         afterWhat.after(
@@ -28,40 +59,27 @@
     }
 
     function getCCInfo(videoId, callback) {
-        var ccInfo = null;
-        if (typeof GM_getValue === "function") {
-            ccInfo = GM_getValue('youtube-caption-indicator-' + videoId);
-            if (ccInfo) {
-                ccInfo = JSON.parse(ccInfo);
+        getCacheValue('youtube-caption-indicator-' + videoId, function (ccInfo) {
+            if (ccInfo && ccInfo.items) {
                 if (current_timestamp - ccInfo.timestamp < cache_ttl) {
                     console.info(videoId + ': Retrieved CC info from cache');
-                    callback(ccInfo.items);
+                    callback(ccInfo.items, true);
                     return;
                 }
                 else {
                     console.info(videoId + ': Cache expired, retrieving CC info again');
                 }
             }
+            console.info(videoId + ': Retrieving CC info from API');
             $.getJSON('https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId=' + videoId + '&key=' + api_key)
                 .done(function (data) {
-                    callback(data.items);
-
-                    if (typeof GM_setValue === 'function') {
-                        GM_setValue('youtube-caption-indicator-' + videoId, JSON.stringify({
-                            timestamp: current_timestamp,
-                            items: data.items
-                        }));
-                        console.info(videoId + ': Stored in cache for ' + cache_ttl + 'seconds');
-                    }
+                    callback(data.items, false);
                 })
                 .fail(function (jqxhr, textStatus, error) {
                     var err = textStatus + ", " + error;
                     console.error(videoId + ': Request Failed: ' + err);
                 });
-        }
-        else {
-            console.error('GM_getValue is undefined !');
-        }
+        });
     }
 
     function getCCInfoElement(language) {
@@ -78,13 +96,10 @@
 
     function addCCInfoToVideoBlockElement(videoUrl, blockElement) {
         var videoId = videoUrl.replace(/^.+\?v=(.+)$/, '$1');
-        if (videoId === 'qiuDE38TEpU') {
-            debugger;
-        }
-        getCCInfo(videoId, function (ccInfo) {
+        getCCInfo(videoId, function (ccInfo, fromCache) {
             var ccNewElements = $.map(ccInfo, function (ccItem) {
                 if (!ccItem.snippet) {
-                    console.error(videoId + ': Malformed CC item: no snippet key, ignoring');
+                    console.info(videoId + ': Malformed CC item: no snippet key, ignoring');
                 }
                 var isAuto = ccItem.snippet.trackKind === 'ASR';
                 var language = isAuto ? 'auto' : ccItem.snippet.language;
@@ -97,6 +112,15 @@
             }
 
             blockElement.html(ccNewElements);
+
+            setCacheValue('youtube-caption-indicator-' + videoId, {
+                timestamp: current_timestamp,
+                items: ccInfo
+            }, fromCache, function(wasAlreadyInCache) {
+                if (!wasAlreadyInCache) {
+                    console.info(videoId + ': Stored in cache for ' + cache_ttl + ' seconds');
+                }
+            });
         });
     }
 
@@ -110,6 +134,7 @@
     }
 
     function createIndicatorFromSearchResults() {
+        current_timestamp = Math.floor(Date.now() / 1000);
         var videoBlockElement = $(this);
         var ccDetailsContainer;
         var metaContainer = videoBlockElement.find('#meta,#metadata').eq(0);
@@ -119,10 +144,10 @@
             ccDetailsContainer = badgesContainer.find('ul.yt-badge-list');
             var ccElements = ccDetailsContainer.find('li.yt-badge-item');
             if (ccElements.length === 0) {
-                console.log(videoId + ': No caption for this video, ignoring');
+                console.info(videoId + ': No caption for this video, ignoring');
             }
             else if (hasProcessedBadges(ccDetailsContainer)) {
-                console.log(videoId + ': Caption list already processed, ignoring');
+                console.info(videoId + ': Caption list already processed, ignoring');
             }
         }
         else {
@@ -132,24 +157,27 @@
                 addCCInfoToVideoBlockElement(videoUrl, ccDetailsContainer);
             }
             else {
-                console.log('Can\'t find the video\'s URL, ignoring');
+                console.info('Can\'t find the video\'s URL, ignoring');
             }
         }
     }
 
-    var videoBlockSelector = 'ytd-grid-video-renderer,ytd-compact-video-renderer';
+    function init() {
+        var videoBlockSelector = 'ytd-grid-video-renderer,ytd-compact-video-renderer';
 
-    new MutationObserver(function (mutations) {
-        mutations.forEach(function (mutation) {
-            $(mutation.addedNodes).filter(videoBlockSelector).each(createIndicatorFromSearchResults);
-        });
-    })
-        .observe($('body').get(0), {
-            childList: true,
-            subtree: true
-        });
+        new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                $(mutation.addedNodes).filter(videoBlockSelector).each(createIndicatorFromSearchResults);
+            });
+        })
+            .observe($('body').get(0), {
+                childList: true,
+                subtree: true
+            });
 
-    $(videoBlockSelector).each(createIndicatorFromSearchResults);
+        $(videoBlockSelector).each(createIndicatorFromSearchResults);
+    }
 
+    init();
 
 })();
