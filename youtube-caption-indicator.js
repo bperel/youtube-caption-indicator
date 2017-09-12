@@ -165,7 +165,7 @@
     }
 
     function init() {
-        var videoBlockSelector = 'ytd-grid-video-renderer,ytd-compact-video-renderer';
+        var videoBlockSelector = 'ytd-grid-video-renderer,ytd-compact-video-renderer,ytd-video-renderer';
 
         new MutationObserver(function (mutations) {
             mutations.forEach(function (mutation) {
