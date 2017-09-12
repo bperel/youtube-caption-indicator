@@ -1,1 +1,4 @@
-bower_components
+/.idea/
+/bower_components
+/api_key
+/youtube-caption-indicator.zip

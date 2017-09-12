@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Youtube caption indicator",
-  "version": "0.1",
+  "version": "0.3",
   "content_scripts": [
 	{
 	  "matches": [
@@ -18,7 +18,7 @@
   },
   "permissions": [
 	"storage",
-	"<all_urls>"
+	"https://*/*"
   ],
   "applications": {
 	"gecko": {

@@ -13,9 +13,12 @@
 (function () {
     'use strict';
 
-    var api_key = '';
+    var api_key = '__API_KEY__';
     var current_timestamp;
     var cache_ttl = 3600;
+
+    var queue = [];
+    var currentUrl = null;
 
     function getCacheValue(key, callback) {
         if (typeof GM_getValue === "function") {
@@ -51,7 +54,7 @@
     function addEmptyBadgeSectionAfter(afterWhat) {
         afterWhat.after(
             $('<div>')
-                .addClass('yt-lockup-badges')
+                .addClass('yt-lockup-badges youtube-caption-indicator')
                 .append(
                     $('<ul>').addClass('yt-badge-list')
                 )
@@ -94,7 +97,7 @@
             );
     }
 
-    function addCCInfoToVideoBlockElement(videoUrl, blockElement) {
+    function addCCInfoToVideoBlockElement(videoUrl, blockElement, callback) {
         var videoId = videoUrl.replace(/^.+\?v=(.+)$/, '$1');
         getCCInfo(videoId, function (ccInfo, fromCache) {
             var ccNewElements = $.map(ccInfo, function (ccItem) {
@@ -120,45 +123,44 @@
                 if (!wasAlreadyInCache) {
                     console.info(videoId + ': Stored in cache for ' + cache_ttl + ' seconds');
                 }
+                callback();
             });
         });
     }
 
-    function getBadgeContainer(metaContainer) {
-        var badgesContainer = metaContainer.find('div.yt-lockup-badges');
-        return badgesContainer.length ? badgesContainer : null;
+    function hasProcessedBadges(metaContainer) {
+        return metaContainer.siblings('.yt-lockup-badges.youtube-caption-indicator').length;
     }
 
-    function hasProcessedBadges(ccDetailsContainer) {
-        return ccDetailsContainer.find('li.yt-badge-item').length > 1;
-    }
-
-    function createIndicatorFromSearchResults() {
+    function addUrlToQueue() {
         current_timestamp = Math.floor(Date.now() / 1000);
         var videoBlockElement = $(this);
         var ccDetailsContainer;
         var metaContainer = videoBlockElement.find('#meta,#metadata').eq(0);
-        var badgesContainer = getBadgeContainer(metaContainer);
         var videoUrl = videoBlockElement.find('a[href^="/watch"]').eq(0).attr('href');
-        if (!!badgesContainer) {
-            ccDetailsContainer = badgesContainer.find('ul.yt-badge-list');
-            var ccElements = ccDetailsContainer.find('li.yt-badge-item');
-            if (ccElements.length === 0) {
-                console.info(videoId + ': No caption for this video, ignoring');
-            }
-            else if (hasProcessedBadges(ccDetailsContainer)) {
-                console.info(videoId + ': Caption list already processed, ignoring');
-            }
+        if (hasProcessedBadges(metaContainer)) {
+            console.info('Has already processed the video, ignoring');
         }
         else {
             if (videoUrl) {
                 addEmptyBadgeSectionAfter(metaContainer);
                 ccDetailsContainer = videoBlockElement.find('ul.yt-badge-list');
-                addCCInfoToVideoBlockElement(videoUrl, ccDetailsContainer);
+                queue.push({url: videoUrl, container: ccDetailsContainer});
             }
             else {
                 console.info('Can\'t find the video\'s URL, ignoring');
             }
+        }
+    }
+
+    function processQueue() {
+        if (currentUrl === null && queue.length) {
+            console.info('Queue size is ' + queue.length);
+            currentUrl = queue.shift();
+            addCCInfoToVideoBlockElement(currentUrl.url, currentUrl.container, function() {
+                currentUrl = null;
+                processQueue();
+            });
         }
     }
 
@@ -167,15 +169,17 @@
 
         new MutationObserver(function (mutations) {
             mutations.forEach(function (mutation) {
-                $(mutation.addedNodes).filter(videoBlockSelector).each(createIndicatorFromSearchResults);
+                $(mutation.addedNodes).filter(videoBlockSelector).each(addUrlToQueue);
             });
+            processQueue();
         })
             .observe($('body').get(0), {
                 childList: true,
                 subtree: true
             });
 
-        $(videoBlockSelector).each(createIndicatorFromSearchResults);
+        $(videoBlockSelector).each(addUrlToQueue);
+        processQueue();
     }
 
     init();
