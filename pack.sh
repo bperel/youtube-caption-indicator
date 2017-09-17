@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 
+build_dir=./build/
+
 rm -f youtube-caption-indicator.zip && \
-cp bower_components/jquery/dist/jquery.min.js jquery.min.js && \
-cp youtube-caption-indicator.js youtube-caption-indicator_orig.js
-sed -i "s/__API_KEY__/`cat api_key`/g" youtube-caption-indicator.js
-zip youtube-caption-indicator.zip \
-    youtube-caption-indicator.js \
+cp bower_components/jquery/dist/jquery.min.js youtube-caption-indicator.js manifest.json ${build_dir} && \
+sed -i "s/__API_KEY__/`cat api_key`/g" ${build_dir}/youtube-caption-indicator.js && \
+sed -i "s/\".*jquery.min.js\"/\"jquery.min.js\"/g" ${build_dir}/manifest.json && \
+\
+zip -j youtube-caption-indicator.zip \
+    ${build_dir}/* \
     README.md \
-    manifest.json \
-    jquery.min.js \
-    assets/icon.png && \
-mv youtube-caption-indicator_orig.js youtube-caption-indicator.js && \
-rm jquery.min.js
+    icon.png

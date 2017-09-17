@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Youtube caption indicator",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "content_scripts": [
 	{
 	  "matches": [
@@ -14,7 +14,7 @@
 	}
   ],
   "browser_action": {
-	"default_icon": "assets/icon.png"
+	"default_icon": "icon.png"
   },
   "permissions": [
 	"storage",
