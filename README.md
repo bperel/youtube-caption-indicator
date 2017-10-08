@@ -4,18 +4,22 @@ Ever wondered if a YouTube video is subtitled in your language, without having t
   
 Youtube caption indicator adds language-specific closed caption indicators below the description of each video among Youtube search results and "similar videos" panels. 
 
-![Demo](assets/caption-indicator-demo.png)
+![Demo](caption-indicator-demo.png)
 
 
-## How to use
+## Build
 
-Fill your YouTube API key in `youtube-caption-indicator.js`.
-Run `bower install`.
+Create a file named api_key at the root of the project and fill it with your YouTube API key.
+Run `bower install`, then build the project with `sh pack.sh`.
 
-### Setup in Chrome
+### Install on Chrome
 
-Enable developer options in Chrome's extension page, click on "Load unpacked extension" and select the project's directory.
+Enable developer options in Chrome's extension page, click on "Load unpacked extension" and select the project's `build` directory.
 
-### Setup in Greasemonkey/Tapermonkey
+### Install on Firefox
 
-Just import the script.
+Go to [about:addons](about:addons) and import the extension from the `build` directory.
+
+### Install on Greasemonkey/Tapermonkey
+
+Just import the script from the `build` directory.
