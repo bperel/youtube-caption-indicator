@@ -2,7 +2,7 @@
 // @name         Youtube caption indicator
 // @namespace    youtube-caption-indicator
 // @require      https://code.jquery.com/jquery-3.1.1.min.js
-// @version      0.3
+// @version      0.3.3
 // @description  Add language-specific caption information in YouTube video blocks
 // @author       Bruno Perel
 // @match        https://www.youtube.com/*
@@ -29,6 +29,11 @@
                 callback(value[key]);
             });
         }
+        else if (typeof(chrome) === 'object') {
+            chrome.storage.sync.get(key, function(value) {
+                callback(value[key]);
+            });
+        }
         else {
             console.error('No suitable cache provider!');
         }
@@ -43,6 +48,13 @@
             var object = {};
             object[key] = value;
             browser.storage.sync.set(object, function() {
+                callback(wasAlreadyInCache);
+            });
+        }
+        else if (typeof(chrome) === 'object') {
+            var object = {};
+            object[key] = value;
+            chrome.storage.sync.set(object, function() {
                 callback(wasAlreadyInCache);
             });
         }
