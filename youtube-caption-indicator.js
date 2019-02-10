@@ -2,7 +2,7 @@
 // @name         Youtube caption indicator
 // @namespace    youtube-caption-indicator
 // @require      https://code.jquery.com/jquery-3.1.1.min.js
-// @version      0.3.3
+// @version      0.3.4
 // @description  Add language-specific caption information in YouTube video blocks
 // @author       Bruno Perel
 // @match        https://www.youtube.com/*

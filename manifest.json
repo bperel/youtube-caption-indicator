@@ -2,14 +2,14 @@
   "manifest_version": 2,
   "name": "Youtube caption indicator",
   "short_name": "Youtube caption indicator",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "content_scripts": [
 	{
 	  "matches": [
 		"https://www.youtube.com/*"
 	  ],
 	  "js": [
-		"bower_components/jquery/dist/jquery.min.js",
+		"node_modules/jquery/dist/jquery.min.js",
 		"youtube-caption-indicator.js"
 	  ]
 	}

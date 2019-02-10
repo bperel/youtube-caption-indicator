@@ -10,7 +10,7 @@ Youtube caption indicator adds language-specific closed caption indicators below
 ## Build
 
 Create a file named api_key at the root of the project and fill it with your YouTube API key.
-Run `bower install`, then build the project with `sh pack.sh`.
+Run `npm install`, then build the project with `sh pack.sh`.
 
 ### Install on Chrome
 

@@ -7,15 +7,7 @@
   ],
   "description": "Add language-specific caption information in YouTube video blocks",
   "license": "MIT",
-  "private": true,
-  "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components",
-    "test",
-    "tests"
-  ],
   "dependencies": {
-    "jquery": "^3.1.1"
+    "jquery": "^3.3.1"
   }
 }

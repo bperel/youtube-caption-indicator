@@ -1,5 +1,5 @@
 /.idea/
-/bower_components
+/node_modules
 /api_key
 /youtube-caption-indicator.zip
 /build
