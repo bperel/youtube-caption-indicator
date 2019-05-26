@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         Youtube caption indicator
 // @namespace    youtube-caption-indicator
-// @require      https://code.jquery.com/jquery-3.1.1.min.js
+// @require      https://code.jquery.com/jquery-3.4.1.min.js
 // @version      0.3.4
 // @description  Add language-specific caption information in YouTube video blocks
 // @author       Bruno Perel
 // @match        https://www.youtube.com/*
+// @match        https://m.youtube.com
 // @grant        GM_getValue
 // @grant        GM_setValue
 // ==/UserScript==
@@ -68,7 +69,7 @@
             $('<div>')
                 .addClass('yt-lockup-badges youtube-caption-indicator')
                 .append(
-                    $('<ul>').addClass('yt-badge-list')
+                    $('<ul>').addClass('yt-badge-list').css({ padding: '10px 0' })
                 )
         );
     }
@@ -101,7 +102,13 @@
         var text = language ? ('CC ' + language) : '(no CC)';
         return $('<span>')
             .addClass('badge badge-style-type-collection style-scope ytd-badge-supported-renderer')
-            .css({display: 'inline-block', paddingRight: '10px'})
+            .css({
+                display: 'inline-block',
+                padding: '2px 10px 8px 0',
+                fontSize: '1.3rem',
+                fontWeight: 500,
+                textTransform: 'uppercase'
+            })
             .append(
                 $('<span>')
                     .addClass('style-scope ytd-badge-supported-renderer')
@@ -148,7 +155,7 @@
         current_timestamp = Math.floor(Date.now() / 1000);
         var videoBlockElement = $(this);
         var ccDetailsContainer;
-        var metaContainer = videoBlockElement.find('#meta,#metadata').eq(0);
+        var metaContainer = videoBlockElement.find('#meta,#metadata,.large-media-item-info').eq(0);
         var videoUrl = videoBlockElement.find('a[href^="/watch"]').eq(0).attr('href');
         if (hasProcessedBadges(metaContainer)) {
             console.info('Has already processed the video, ignoring');
@@ -177,12 +184,10 @@
     }
 
     function init() {
-        var videoBlockSelector = 'ytd-grid-video-renderer,ytd-compact-video-renderer,ytd-video-renderer';
+        var videoBlockSelector = 'ytd-grid-video-renderer,ytd-compact-video-renderer,ytd-video-renderer,ytm-video-with-context-renderer';
 
-        new MutationObserver(function (mutations) {
-            mutations.forEach(function (mutation) {
-                $(mutation.addedNodes).filter(videoBlockSelector).each(addUrlToQueue);
-            });
+        new MutationObserver(function () {
+            $(videoBlockSelector).each(addUrlToQueue);
             processQueue();
         })
             .observe($('body').get(0), {
