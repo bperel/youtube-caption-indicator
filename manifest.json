@@ -3,10 +3,11 @@
   "name": "Youtube caption indicator",
   "short_name": "Youtube caption indicator",
   "version": "0.3.4",
+  "run_at": "document_end",
   "content_scripts": [
 	{
 	  "matches": [
-		"https://www.youtube.com/*"
+		"https://*.youtube.com/*"
 	  ],
 	  "js": [
 		"node_modules/jquery/dist/jquery.min.js",
