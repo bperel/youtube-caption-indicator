@@ -78,15 +78,15 @@
         getCacheValue('youtube-caption-indicator-' + videoId, function (ccInfo) {
             if (ccInfo && ccInfo.items) {
                 if (current_timestamp - ccInfo.timestamp < cache_ttl) {
-                    console.info(videoId + ': Retrieved CC info from cache');
+                    console.debug(videoId + ': Retrieved CC info from cache');
                     callback(ccInfo.items, true);
                     return;
                 }
                 else {
-                    console.info(videoId + ': Cache expired, retrieving CC info again');
+                    console.debug(videoId + ': Cache expired, retrieving CC info again');
                 }
             }
-            console.info(videoId + ': Retrieving CC info from API');
+            console.debug(videoId + ': Retrieving CC info from API');
             $.getJSON('https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId=' + videoId + '&key=' + api_key)
                 .done(function (data) {
                     callback(data.items, false);
@@ -121,7 +121,7 @@
         getCCInfo(videoId, function (ccInfo, fromCache) {
             var ccNewElements = $.map(ccInfo, function (ccItem) {
                 if (!ccItem.snippet) {
-                    console.info(videoId + ': Malformed CC item: no snippet key, ignoring');
+                    console.debug(videoId + ': Malformed CC item: no snippet key, ignoring');
                 }
                 var isAuto = ccItem.snippet.trackKind === 'ASR';
                 var language = isAuto ? 'auto' : ccItem.snippet.language;
@@ -140,7 +140,7 @@
                 items: ccInfo
             }, fromCache, function(wasAlreadyInCache) {
                 if (!wasAlreadyInCache) {
-                    console.info(videoId + ': Stored in cache for ' + cache_ttl + ' seconds');
+                    console.debug(videoId + ': Stored in cache for ' + cache_ttl + ' seconds');
                 }
                 callback();
             });
@@ -158,7 +158,7 @@
         var metaContainer = videoBlockElement.find('#meta,#metadata,.large-media-item-info').eq(0);
         var videoUrl = videoBlockElement.find('a[href^="/watch"]').eq(0).attr('href');
         if (hasProcessedBadges(metaContainer)) {
-            console.info('Has already processed the video, ignoring');
+            console.debug('Has already processed the video, ignoring');
         }
         else {
             if (videoUrl) {
@@ -167,14 +167,14 @@
                 queue.push({url: videoUrl, container: ccDetailsContainer});
             }
             else {
-                console.info('Can\'t find the video\'s URL, ignoring');
+                console.debug('Can\'t find the video\'s URL, ignoring');
             }
         }
     }
 
     function processQueue() {
         if (currentUrl === null && queue.length) {
-            console.info('Queue size is ' + queue.length);
+            console.debug('Queue size is ' + queue.length);
             currentUrl = queue.shift();
             addCCInfoToVideoBlockElement(currentUrl.url, currentUrl.container, function() {
                 currentUrl = null;
