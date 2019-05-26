@@ -11,12 +11,15 @@
 	  ],
 	  "js": [
 		"node_modules/jquery/dist/jquery.min.js",
-		"youtube-caption-indicator.js"
+		"youtube-caption-indicator.js",
+		"popup/settings.js"
 	  ]
 	}
   ],
   "browser_action": {
-	"default_icon": "icon.png"
+	"default_icon": "icon.png",
+	"default_title": "Youtube caption indicator",
+	"default_popup": "popup/settings.html"
   },
   "permissions": [
 	"storage",
