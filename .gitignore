@@ -1,5 +1,4 @@
-/.idea/
 /node_modules
+/dist
+/dist-zip
 /api_key
-/youtube-caption-indicator.zip
-/build
