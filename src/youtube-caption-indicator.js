@@ -4,7 +4,7 @@ window.$ = window.jQuery = jQuery;
 
 const apiKey = '__API_KEY__';
 
-const videoBlockSelector = 'ytd-grid-video-renderer,ytd-compact-video-renderer,ytd-video-renderer,ytm-video-with-context-renderer';
+const videoBlockSelector = 'ytd-rich-grid-video-renderer';
 
 let userSettings;
 
@@ -115,7 +115,7 @@ let currentTimestamp;
   function addUrlToQueue() {
     currentTimestamp = Math.floor(Date.now() / 1000);
     const videoBlockElement = $(this);
-    const metaContainer = videoBlockElement.find('#meta,#metadata,.large-media-item-info').eq(0);
+    const metaContainer = videoBlockElement.find('#metadata,.large-media-item-info,.ytd-video-meta-block').eq(0);
     if (hasProcessedBadges(metaContainer)) {
       console.debug('Video has already been processed, ignoring');
     } else {

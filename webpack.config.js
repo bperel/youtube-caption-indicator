@@ -10,6 +10,7 @@ const config = {
   mode: process.env.NODE_ENV,
   context: __dirname + '/src',
   entry: {
+    background: './background.js',
     'popup/popup': './popup/popup.js',
     'youtube-caption-indicator': './youtube-caption-indicator.js',
     'lib/cache': './lib/cache.js',
@@ -96,6 +97,9 @@ if (process.env.HMR === 'true') {
   config.plugins = (config.plugins || []).concat([
     new ExtensionReloader({
       manifest: __dirname + '/src/manifest.json',
+      entries: {
+        background: 'background.js',
+      },
     }),
   ]);
 }

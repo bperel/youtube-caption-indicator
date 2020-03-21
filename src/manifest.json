@@ -3,7 +3,10 @@
   "name": "youtube-caption-indicator",
   "short_name": "Youtube caption indicator",
   "description": "Add language-specific caption information in YouTube video blocks",
-  "version": "0.4.0",
+  "version": "0.4.1",
+  "background": {
+    "scripts": ["background.js"]
+  },
   "icons": {
     "128": "icons/icon.png"
   },
